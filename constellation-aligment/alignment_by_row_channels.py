@@ -1,19 +1,7 @@
+from subprocess import call
 import scipy.io.wavfile
 import numpy as np
-from subprocess import call
 import math
-
-
-# Extract audio from video file, save as wav auido file
-# INPUT: Video file
-# OUTPUT: Does not return any values, but saves audio as wav file
-def extract_audio(dir, video_file):
-    track_name = video_file.split(".")
-    audio_output = track_name[0] + "WAV.wav"  # !! CHECK TO SEE IF FILE IS IN UPLOADS DIRECTORY
-    output = dir + audio_output
-    call(["avconv", "-y", "-i", dir+video_file, "-vn", "-ac", "1", "-f", "wav", output])
-    return output
-
 
 # Read file
 # INPUT: Audio file
@@ -51,7 +39,6 @@ def make_horiz_bins(data, fft_bin_size, overlap, box_height):
 
     return horiz_bins
 
-
 # Compute the one-dimensional discrete Fourier Transform
 # INPUT: list with length of number of samples per second
 # OUTPUT: list of real values len of num samples per second
@@ -65,7 +52,6 @@ def fourier(sample):  #, overlap):
 
     return mag
 
-
 def make_vert_bins(horiz_bins, box_width):
     boxes = {}
     for key in horiz_bins.keys():
@@ -77,7 +63,6 @@ def make_vert_bins(horiz_bins, box_width):
                 boxes[(box_x,key)] = [(horiz_bins[key][i])]
 
     return boxes
-
 
 def find_bin_max(boxes, maxes_per_box):
     freqs_dict = {}
@@ -98,7 +83,6 @@ def find_bin_max(boxes, maxes_per_box):
 
     return freqs_dict
 
-
 def find_freq_pairs(freqs_dict_orig, freqs_dict_sample):
     time_pairs = []
     for key in freqs_dict_sample.keys():  # iterate through freqs in sample
@@ -108,7 +92,6 @@ def find_freq_pairs(freqs_dict_orig, freqs_dict_sample):
                     time_pairs.append((freqs_dict_sample[key][i], freqs_dict_orig[key][j]))
 
     return time_pairs
-
 
 def find_delay(time_pairs):
     t_diffs = {}
@@ -124,18 +107,17 @@ def find_delay(time_pairs):
 
     return time_delay
 
-
 # Find time delay between two video files
-def align(video1, video2, dir, fft_bin_size=1024, overlap=0, box_height=512, box_width=43, samples_per_box=7):
+def align(wav1, wav2, dir, fft_bin_size=1024, overlap=0, box_height=512, box_width=43, samples_per_box=7):
     # Process first file
-    wavfile1 = extract_audio(dir, video1)
+    wavfile1 = wav1
     raw_audio1, rate = read_audio(wavfile1)
     bins_dict1 = make_horiz_bins(raw_audio1[:44100*120], fft_bin_size, overlap, box_height) #bins, overlap, box height
     boxes1 = make_vert_bins(bins_dict1, box_width)  # box width
     ft_dict1 = find_bin_max(boxes1, samples_per_box)  # samples per box
 
     # Process second file
-    wavfile2 = extract_audio(dir, video2)
+    wavfile2 = wav2
     raw_audio2, rate = read_audio(wavfile2)
     bins_dict2 = make_horiz_bins(raw_audio2[:44100*60], fft_bin_size, overlap, box_height)
     boxes2 = make_vert_bins(bins_dict2, box_width)
@@ -151,22 +133,3 @@ def align(video1, video2, dir, fft_bin_size=1024, overlap=0, box_height=512, box
         return (seconds, 0)
     else:
         return (0, abs(seconds))
-
-
-
-# ======= TEST FILES ==============
-# audio1 = "regina6POgShQ-lC4.mp4"
-# # audio2 = "reginaJo2cUWpILMgWAV.wav"
-# audio1 = "Settle2kFaZIKtcn6s.mp4"
-# audio2 = "Settle2d_tj-9_dGog.mp4"
-# audio1 = "DanielZ5PPlk53IMY.mp4"
-# audio2 = "Daniel08ycq2T_ab4.mp4"
-# directory = "./uploads/"
-# t = align(audio1, audio2, directory)
-# print t
-
-
-
-
-
-
